@@ -1,0 +1,1097 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LeanProof — Interactive Lean 4 Proof Tutorial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --white: #fff;
+      --black: #0a0a0a;
+      --gray-50: #fafafa;
+      --gray-100: #f5f5f5;
+      --gray-200: #e5e5e5;
+      --gray-300: #d4d4d4;
+      --gray-400: #a3a3a3;
+      --gray-500: #737373;
+      --gray-600: #525252;
+      --gray-700: #404040;
+      --gray-800: #262626;
+      --gray-900: #171717;
+      --green: #16a34a;
+      --red: #dc2626;
+      --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
+      --radius: 6px;
+      --transition: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    *, :before, :after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; font-size: 16px; }
+    body { font-family: var(--font-sans); color: var(--black); background: var(--white); line-height: 1.6; }
+    #root { min-height: 100vh; }
+    h1, h2, h3, h4 { letter-spacing: -0.02em; color: var(--black); font-weight: 600; line-height: 1.25; }
+    h1 { font-size: 2rem; }
+    h2 { font-size: 1.375rem; }
+    h3 { font-size: 1.125rem; }
+    a { color: inherit; text-decoration: none; }
+    .btn {
+      border-radius: var(--radius); font-family: var(--font-sans); cursor: pointer;
+      transition: all var(--transition); white-space: nowrap; border: 1px solid transparent;
+      align-items: center; gap: 6px; padding: 8px 16px; font-size: 0.8125rem;
+      font-weight: 500; display: inline-flex;
+    }
+    .btn-primary { background: var(--black); color: var(--white); border-color: var(--black); }
+    .btn-primary:hover { background: var(--gray-800); }
+    .btn-primary:disabled { background: var(--gray-300); border-color: var(--gray-300); cursor: not-allowed; }
+    .btn-ghost { color: var(--gray-600); background: transparent; }
+    .btn-ghost:hover { background: var(--gray-100); color: var(--black); }
+    .app-layout { grid-template-rows: auto 1fr; grid-template-columns: 240px 1fr; min-height: 100vh; display: grid; }
+    .app-header {
+      border-bottom: 1px solid var(--gray-200); background: var(--white); z-index: 100;
+      grid-column: 1/-1; position: sticky; top: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .header-inner { align-items: center; justify-content: space-between; height: 56px; padding: 0 24px; display: flex; max-width: 100%; }
+    .header-left { align-items: center; gap: 16px; display: flex; flex-shrink: 0; }
+    .menu-toggle {
+      border: 1px solid var(--gray-200); border-radius: var(--radius); cursor: pointer;
+      width: 36px; height: 36px; color: var(--gray-600); background: transparent;
+      justify-content: center; align-items: center; display: none; transition: all var(--transition);
+    }
+    .menu-toggle:hover { background: var(--gray-50); color: var(--black); border-color: var(--gray-300); }
+    .logo { letter-spacing: -0.03em; color: var(--black); font-size: 1.125rem; font-weight: 700; text-decoration: none; transition: color var(--transition); }
+    .logo:hover { color: var(--gray-700); }
+    .header-chapters { align-items: center; gap: 2px; display: flex; flex-wrap: wrap; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
+    .header-chapters::-webkit-scrollbar { display: none; }
+    .header-chapters a {
+      border-radius: var(--radius); color: var(--gray-600); transition: all var(--transition);
+      align-items: center; gap: 6px; padding: 8px 12px; font-size: 0.8125rem;
+      font-weight: 500; display: flex; white-space: nowrap; text-decoration: none; border: 1px solid transparent;
+    }
+    .header-chapters a:hover { color: var(--black); background: var(--gray-50); border-color: var(--gray-200); }
+    .header-chapters a.active { color: var(--black); background: var(--gray-100); border-color: var(--gray-300); font-weight: 600; }
+    .sidebar {
+      border-right: 1px solid var(--gray-200); background: var(--gray-50);
+      height: calc(100vh - 52px); position: sticky; top: 52px; overflow-y: auto;
+    }
+    .sidebar-inner { padding: 16px 0; }
+    .sidebar-chapter-title {
+      text-transform: uppercase; letter-spacing: 0.08em; color: var(--gray-400);
+      padding: 8px 20px; font-size: 0.6875rem; font-weight: 600; display: block;
+    }
+    .sidebar-section {
+      color: var(--gray-500); transition: all var(--transition);
+      border-left: 2px solid transparent; align-items: center; gap: 8px;
+      padding: 7px 20px 7px 28px; font-size: 0.8125rem; display: flex;
+    }
+    .sidebar-section:hover { color: var(--black); background: var(--gray-100); }
+    .sidebar-section.current { color: var(--black); background: var(--white); border-left-color: var(--black); font-weight: 500; }
+    .sidebar-q-dot { background: var(--gray-300); border-radius: 50%; flex-shrink: 0; width: 5px; height: 5px; }
+    .app-main { min-width: 0; }
+    .chapter-page { max-width: 720px; margin: 0 auto; padding: 48px 32px 80px; }
+    .chapter-header { border-bottom: 1px solid var(--gray-200); margin-bottom: 48px; padding-bottom: 32px; }
+    .chapter-number { text-transform: uppercase; letter-spacing: 0.1em; color: var(--gray-400); margin-bottom: 8px; font-size: 0.75rem; font-weight: 600; }
+    .chapter-header h1 { margin-bottom: 16px; }
+    .chapter-tags { flex-wrap: wrap; gap: 6px; display: flex; }
+    .chapter-tag {
+      font-family: var(--font-mono); background: var(--gray-100); border: 1px solid var(--gray-200);
+      color: var(--gray-600); border-radius: 100px; padding: 3px 10px; font-size: 0.6875rem;
+    }
+    .section { scroll-margin-top: 72px; }
+    .section h2 { border-bottom: 1px solid var(--gray-100); margin-bottom: 20px; padding-bottom: 12px; }
+    .section-divider { height: 32px; }
+    .content-paragraph { color: var(--gray-700); margin-bottom: 20px; font-size: 0.9375rem; line-height: 1.75; }
+    .content-theorem { margin-bottom: 24px; }
+    .theorem-label { text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray-400); margin-bottom: 8px; font-size: 0.6875rem; font-weight: 600; }
+    .code-block { border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; }
+    .code-block-header { background: var(--gray-50); border-bottom: 1px solid var(--gray-200); align-items: center; gap: 10px; padding: 8px 14px; font-size: 0.6875rem; display: flex; }
+    .code-block-lang { font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray-400); font-size: 0.625rem; font-weight: 600; }
+    .code-block-title { color: var(--gray-600); font-weight: 500; }
+    .code-copy-btn {
+      border: 1px solid var(--gray-200); background: var(--white); color: var(--gray-500);
+      font-family: var(--font-sans); cursor: pointer; transition: all var(--transition);
+      border-radius: 4px; align-items: center; gap: 4px; margin-left: auto;
+      padding: 3px 8px; font-size: 0.625rem; display: inline-flex;
+    }
+    .code-copy-btn:hover { background: var(--gray-100); color: var(--black); }
+    .code-pre { background: var(--gray-900); color: #d4d4d4; font-family: var(--font-mono); padding: 14px 18px; font-size: 0.8125rem; line-height: 1.7; overflow-x: auto; }
+    .code-pre code { font-family: inherit; font-size: inherit; color: inherit; background: transparent; padding: 0; }
+    .exercise-block { border: 1px solid var(--gray-200); border-radius: var(--radius); margin-top: 24px; overflow: hidden; }
+    .exercise-question { border-bottom: 1px solid var(--gray-100); padding: 20px; }
+    .exercise-question:last-child { border-bottom: none; }
+    .question-prompt { color: var(--black); align-items: flex-start; gap: 10px; margin-bottom: 14px; font-size: 0.9375rem; font-weight: 500; line-height: 1.5; display: flex; }
+    .question-num { background: var(--black); min-width: 26px; height: 22px; color: var(--white); letter-spacing: 0.03em; border-radius: 100px; flex-shrink: 0; justify-content: center; align-items: center; padding: 0 6px; font-size: 0.625rem; font-weight: 700; display: inline-flex; }
+    .question-options { flex-direction: column; gap: 6px; display: flex; }
+    .question-opt { text-align: left; border: 1px solid var(--gray-200); border-radius: var(--radius); background: var(--white); cursor: pointer; width: 100%; font-family: var(--font-sans); color: var(--gray-600); transition: all var(--transition); align-items: center; gap: 10px; padding: 10px 14px; font-size: 0.8125rem; line-height: 1.5; display: flex; }
+    .question-opt:hover:not(:disabled) { border-color: var(--gray-400); background: var(--gray-50); color: var(--black); }
+    .question-opt.selected { border-color: var(--black); color: var(--black); font-weight: 500; }
+    .question-opt.correct { border-color: var(--green); color: #15803d; background: #f0fdf4; }
+    .question-opt.wrong { border-color: var(--red); color: #b91c1c; background: #fef2f2; }
+    .question-opt:disabled { cursor: default; }
+    .opt-letter { border: 1px solid var(--gray-200); width: 24px; height: 24px; transition: all var(--transition); border-radius: 50%; flex-shrink: 0; justify-content: center; align-items: center; font-size: 0.6875rem; font-weight: 600; display: flex; }
+    .question-opt.selected .opt-letter { background: var(--black); color: var(--white); border-color: var(--black); }
+    .question-opt.correct .opt-letter { background: var(--green); color: var(--white); border-color: var(--green); }
+    .question-opt.wrong .opt-letter { background: var(--red); color: var(--white); border-color: var(--red); }
+    .opt-text { flex: 1; }
+    .opt-icon { flex-shrink: 0; }
+    .icon-ok { color: var(--green); }
+    .icon-no { color: var(--red); }
+    .reveal-btn { font-family: var(--font-sans); border: 1px solid var(--gray-200); border-radius: var(--radius); background: var(--white); color: var(--gray-600); cursor: pointer; transition: all var(--transition); align-items: center; gap: 5px; margin-top: 12px; padding: 6px 12px; font-size: 0.75rem; font-weight: 500; display: inline-flex; }
+    .reveal-btn:hover { background: var(--gray-50); border-color: var(--gray-400); color: var(--black); }
+    .explanation { border-radius: var(--radius); margin-top: 12px; padding: 12px 16px; font-size: 0.8125rem; line-height: 1.6; animation: 0.15s ease-out fadeIn; }
+    .explanation.ok { color: #15803d; background: #f0fdf4; border: 1px solid #bbf7d0; }
+    .explanation.no { color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; }
+    @keyframes fadeIn { 0% { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .practice-block { border: 1px solid var(--gray-200); border-radius: var(--radius); margin-top: 24px; overflow: hidden; }
+    .practice-tabs { border-bottom: 1px solid var(--gray-200); background: var(--gray-50); display: flex; overflow-x: auto; }
+    .practice-tab { font-family: var(--font-sans); color: var(--gray-500); cursor: pointer; transition: all var(--transition); white-space: nowrap; background: transparent; border: none; border-bottom: 2px solid transparent; padding: 10px 16px; font-size: 0.8125rem; font-weight: 500; }
+    .practice-tab:hover { color: var(--black); }
+    .practice-tab.active { color: var(--black); background: var(--white); border-bottom-color: var(--black); }
+    .practice-problem { padding: 20px; }
+    .practice-desc { color: var(--gray-600); margin-bottom: 16px; font-size: 0.875rem; line-height: 1.6; }
+    .practice-start-code { margin-bottom: 24px; }
+    .practice-start-code .code-block { border-left: 3px solid var(--black); }
+    .practice-step { margin-bottom: 16px; }
+    .practice-step.locked { opacity: 0.35; pointer-events: none; }
+    .practice-step-header { align-items: baseline; gap: 10px; margin-bottom: 10px; display: flex; }
+    .step-badge { background: var(--gray-100); border: 1px solid var(--gray-200); text-transform: uppercase; letter-spacing: 0.04em; color: var(--gray-500); border-radius: 100px; flex-shrink: 0; justify-content: center; align-items: center; padding: 2px 8px; font-size: 0.625rem; font-weight: 700; display: inline-flex; }
+    .step-prompt { color: var(--gray-700); font-size: 0.875rem; font-weight: 500; }
+    .step-options { border-left: 2px solid var(--gray-100); flex-direction: column; gap: 6px; padding-left: 12px; display: flex; }
+    .step-opt { text-align: left; border: 1px solid var(--gray-200); border-radius: var(--radius); background: var(--white); cursor: pointer; width: 100%; font-family: var(--font-sans); transition: all var(--transition); align-items: center; gap: 10px; padding: 10px 14px; display: flex; }
+    .step-opt:hover:not(:disabled) { border-color: var(--gray-400); background: var(--gray-50); }
+    .step-opt.selected { border-color: var(--black); background: var(--gray-50); }
+    .step-opt.correct { border-color: var(--green); background: #f0fdf4; }
+    .step-opt.wrong { border-color: var(--red); background: #fef2f2; }
+    .step-opt:disabled { cursor: default; }
+    .step-letter { border: 1px solid var(--gray-200); width: 22px; height: 22px; transition: all var(--transition); border-radius: 50%; flex-shrink: 0; justify-content: center; align-items: center; font-size: 0.625rem; font-weight: 700; display: flex; }
+    .step-opt.selected .step-letter { background: var(--black); color: var(--white); border-color: var(--black); }
+    .step-opt.correct .step-letter { background: var(--green); color: var(--white); border-color: var(--green); }
+    .step-opt.wrong .step-letter { background: var(--red); color: var(--white); border-color: var(--red); }
+    .step-code { font-family: var(--font-mono); color: var(--gray-700); word-break: break-all; flex: 1; font-size: 0.8125rem; line-height: 1.4; }
+    .step-opt.correct .step-code { color: #15803d; }
+    .step-opt.wrong .step-code { color: #b91c1c; }
+    .step-check-btn { font-family: var(--font-sans); border: 1px solid var(--gray-200); border-radius: var(--radius); background: var(--white); color: var(--gray-600); cursor: pointer; transition: all var(--transition); align-items: center; gap: 5px; margin-top: 8px; padding: 6px 12px; font-size: 0.75rem; font-weight: 500; display: inline-flex; }
+    .step-check-btn:hover { background: var(--gray-50); border-color: var(--gray-400); color: var(--black); }
+    .step-feedback { border-radius: var(--radius); margin-top: 8px; padding: 10px 14px; font-size: 0.8125rem; line-height: 1.6; animation: 0.15s ease-out fadeIn; }
+    .step-feedback.ok { color: #15803d; background: #f0fdf4; border: 1px solid #bbf7d0; }
+    .step-feedback.no { color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; }
+    .practice-complete { border-top: 1px solid var(--gray-100); align-items: center; gap: 12px; margin-top: 20px; padding-top: 16px; display: flex; }
+    .practice-solution { flex-basis: 100%; margin-top: 16px; }
+    .glossary-panel { border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; }
+    .glossary-search { border-bottom: 1px solid var(--gray-200); color: var(--gray-400); align-items: center; gap: 8px; padding: 12px 16px; display: flex; }
+    .glossary-search input { font-family: var(--font-sans); color: var(--black); background: transparent; border: none; outline: none; flex: 1; font-size: 0.875rem; }
+    .glossary-search input::placeholder { color: var(--gray-300); }
+    .glossary-entry { border-bottom: 1px solid var(--gray-100); }
+    .glossary-entry:last-child { border-bottom: none; }
+    .glossary-term { width: 100%; font-family: var(--font-sans); cursor: pointer; transition: background var(--transition); color: var(--gray-600); background: transparent; border: none; align-items: center; gap: 8px; padding: 12px 16px; display: flex; }
+    .glossary-term:hover { background: var(--gray-50); }
+    .glossary-term code { font-family: var(--font-mono); color: var(--black); background: var(--gray-100); border-radius: 4px; padding: 2px 8px; font-size: 0.8125rem; font-weight: 500; }
+    .glossary-body { padding: 0 16px 16px 38px; animation: 0.15s ease-out fadeIn; }
+    .glossary-def { color: var(--gray-600); margin-bottom: 12px; font-size: 0.8125rem; line-height: 1.6; }
+    .glossary-example { border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; }
+    .glossary-example-label { text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray-400); background: var(--gray-50); border-bottom: 1px solid var(--gray-200); padding: 6px 12px; font-size: 0.625rem; font-weight: 600; }
+    .glossary-pre { background: var(--gray-900); color: #d4d4d4; font-family: var(--font-mono); padding: 12px 14px; font-size: 0.75rem; line-height: 1.65; overflow-x: auto; }
+    .glossary-pre code { font-family: inherit; font-size: inherit; color: inherit; background: transparent; padding: 0; }
+    .export-section { margin-top: 48px; padding: 32px; }
+    .export-card { border: 2px solid var(--gray-200); border-radius: var(--radius); padding: 32px; text-align: center; background: linear-gradient(135deg, var(--gray-50) 0%, var(--white) 100%); }
+    .export-card h3 { font-size: 1.25rem; margin-bottom: 12px; color: var(--black); }
+    .export-description { color: var(--gray-600); font-size: 0.9375rem; margin-bottom: 24px; line-height: 1.6; }
+    .export-description strong { color: var(--black); font-weight: 600; }
+    .export-btn { padding: 12px 24px; font-size: 0.9375rem; gap: 8px; margin: 0 auto; display: inline-flex; }
+    .export-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .export-hint { margin-top: 12px; font-size: 0.8125rem; color: var(--gray-500); font-style: italic; }
+    @media (width <= 900px) {
+      .app-layout { grid-template-columns: 1fr; }
+      .sidebar { z-index: 90; background: var(--white); width: 280px; display: none; position: fixed; top: 52px; bottom: 0; left: 0; box-shadow: 4px 0 16px rgba(0,0,0,0.1); }
+      .sidebar.open { display: block; }
+      .sidebar-overlay { z-index: 80; background: rgba(0,0,0,0.1); position: fixed; inset: 52px 0 0; }
+      .menu-toggle { display: flex; }
+      .header-left { min-width: 0; }
+      .chapter-page { padding: 32px 20px 60px; }
+      .chapter-header h1 { font-size: 1.5rem; }
+      h2 { font-size: 1.125rem; }
+    }
+    @media (width <= 600px) {
+      .header-chapters a { padding: 6px 8px; font-size: 0.75rem; }
+      .question-opt { padding: 8px 10px; font-size: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useMemo, createContext, useContext, createRef, useRef } = React
+
+    // ===== SVG ICONS =====
+    const Icon = ({ name, size = 16, className = '' }) => {
+      const svgProps = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', className }
+      switch (name) {
+        case 'menu': return <svg {...svgProps}><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        case 'x': return <svg {...svgProps}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        case 'book': return <svg {...svgProps}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        case 'copy': return <svg {...svgProps}><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        case 'check': return <svg {...svgProps}><polyline points="20 6 9 17 4 12"/></svg>
+        case 'search': return <svg {...svgProps}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        case 'chevron-down': return <svg {...svgProps}><polyline points="6 9 12 15 18 9"/></svg>
+        case 'chevron-up': return <svg {...svgProps}><polyline points="18 15 12 9 6 15"/></svg>
+        case 'check-circle': return <svg {...svgProps}><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+        case 'x-circle': return <svg {...svgProps}><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        case 'rotate': return <svg {...svgProps}><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        case 'download': return <svg {...svgProps}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        default: return null
+      }
+    }
+
+    // ===== DATA =====
+    const chaptersData = [
+      {
+        id: 'introduction', number: 0, title: 'Introduction to Lean 4', tacticTags: ['overview', 'setup', 'basics'],
+        sections: [
+          {
+            id: 'what-is-lean', title: 'What is Lean 4?', kind: 'explanation',
+            content: [
+              { type: 'paragraph', text: 'Lean 4 is an open-source programming language and proof assistant that combines functional programming with formal verification. It allows you to write verified software and mathematical proofs that are mechanically checked for correctness.' },
+              { type: 'paragraph', text: 'Unlike traditional programming languages, Lean 4 has a powerful type system that can express complex properties. If your code type-checks, it\'s guaranteed to satisfy those properties. This makes it invaluable for critical systems where correctness matters.' },
+              { type: 'paragraph', text: 'Lean 4 represents a major evolution from Lean 3, with significant improvements in performance, metaprogramming capabilities, and language design. It\'s rapidly becoming the premier tool for formal verification and proof engineering.' }
+            ]
+          },
+          {
+            id: 'proofs-as-code', title: 'Proofs as Code', kind: 'explanation',
+            content: [
+              { type: 'paragraph', text: 'In Lean 4, proofs are written using tactics—commands that guide the proof assistant to construct a formal proof. Think of tactics as a programming language for proofs, where you build logical arguments step by step.' },
+              { type: 'paragraph', text: 'The structure of a Lean proof follows the `by ...` block syntax. Inside, you use tactics to manipulate your proof state until the goal is achieved. This interactive approach makes theorem proving accessible and intuitive.' }
+            ]
+          },
+          {
+            id: 'first-proof', title: 'Your First Proof', kind: 'explanation',
+            content: [
+              { type: 'paragraph', text: 'Let\'s look at a simple example: proving that if a proposition P implies Q, and P implies Q implies R, then P implies R. This is a straightforward chain of logical implications.' },
+              { type: 'theorem', name: 'Example', code: `example (p q r : Prop) (hpq : p → q) (hqr : q → r) : p → r := by
+  intro hp
+  apply hqr
+  exact hpq hp` },
+              { type: 'paragraph', text: 'This proof demonstrates three fundamental tactics: `intro` to introduce assumptions, `apply` to work backward from the goal, and `exact` to provide the exact term needed to close the goal.' }
+            ]
+          },
+          {
+            id: 'intro-quiz', title: 'Check Your Understanding', kind: 'exercise',
+            intro: [{ type: 'paragraph', text: 'Test your understanding of Lean 4 basics with these questions.' }],
+            questions: [
+              { prompt: 'What is Lean 4 primarily used for?', options: [{ text: 'Web development only', correct: false }, { text: 'Functional programming and formal verification', correct: true }, { text: 'Machine learning', correct: false }, { text: 'Database management', correct: false }], explanation: 'Lean 4 is designed for functional programming combined with formal verification, allowing you to write code that is mechanically proven correct.' },
+              { prompt: 'What are tactics in Lean 4?', options: [{ text: 'Commands for proving theorems', correct: true }, { text: 'Variable declarations', correct: false }, { text: 'Comments in the code', correct: false }, { text: 'Import statements', correct: false }], explanation: 'Tactics are commands that guide the proof assistant, allowing you to construct formal proofs step by step through interactive manipulation of the proof state.' },
+              { prompt: 'What does the `by` keyword indicate in Lean?', options: [{ text: 'Start of a tactic-based proof', correct: true }, { text: 'End of a theorem', correct: false }, { text: 'A variable definition', correct: false }, { text: 'A type annotation', correct: false }], explanation: 'The `by` keyword marks the beginning of a tactic-based proof, where subsequent tactics will be used to construct the formal proof.' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'direct-proof', number: 1, title: 'Direct Proof', tacticTags: ['apply', 'exact', 'rfl'],
+        sections: [
+          {
+            id: 'what-is-proof', title: 'What is a Proof?', kind: 'explanation',
+            content: [
+              { type: 'paragraph', text: 'A proof is a logical argument that demonstrates a statement is true. In Lean 4, we write proofs using tactics, which are commands that transform our proof state step by step until we reach the goal.' },
+              { type: 'paragraph', text: 'The simplest form of proof is a direct proof: we start with given assumptions and apply logical rules to reach the desired conclusion.' }
+            ]
+          },
+          {
+            id: 'intro-and-exact', title: 'Intro and Exact', kind: 'explanation',
+            content: [
+              { type: 'paragraph', text: 'The `intro` tactic introduces a hypothesis from an implication in the goal. If your goal is `P → Q`, `intro` will add `P` to your context and change the goal to `Q`.' },
+              { type: 'paragraph', text: 'The `exact` tactic closes a goal when you have exactly the right term or hypothesis available. It\'s the "final answer" of your proof.' }
+            ]
+          },
+          {
+            id: 'intro-exercise', title: 'Exercise: Using Intro', kind: 'exercise',
+            intro: [{ type: 'paragraph', text: 'Test your understanding of the `intro` tactic. What does it do when applied to an implication goal?' }],
+            questions: [
+              { prompt: 'If the goal is `P → Q`, what does `intro h` do?', options: [{ text: 'Adds `h : P` to the context and changes goal to `Q`', correct: true }, { text: 'Adds `h : Q` to the context and changes goal to `P`', correct: false }, { text: 'Changes the goal to `P → Q → h`', correct: false }, { text: 'Nothing, intro is not a valid tactic', correct: false }], explanation: 'The `intro` tactic takes the assumption from the left side of an implication (`P` in `P → Q`) and adds it to the context with the name you provide (here `h`). The goal becomes the right side (`Q`).' },
+              { prompt: 'When should you use `exact`?', options: [{ text: 'To introduce a new hypothesis', correct: false }, { text: 'When you have exactly the term needed to close the goal', correct: true }, { text: 'To rewrite using an equality', correct: false }, { text: 'To apply a theorem to the goal', correct: false }], explanation: '`exact` is used when you have a term or hypothesis that precisely matches the goal type. It "closes" the goal by providing the required proof term.' }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'rewrite-tactics', number: 2, title: 'Rewrite Tactics', tacticTags: ['rw', 'simp'],
+        sections: [
+          {
+            id: 'understanding-rw', title: 'Understanding rw', kind: 'explanation',
+            content: [
+              { type: 'paragraph', text: 'The `rw` tactic (rewrite) is one of the most commonly used tactics in Lean. It transforms your goal or hypotheses using equalities.' },
+              { type: 'paragraph', text: 'If you have `h : a = b` and your goal contains `a`, you can use `rw [h]` to replace all occurrences of `a` with `b`. To rewrite in a hypothesis instead of the goal, use `rw [h] at hypName`.' }
+            ]
+          },
+          {
+            id: 'rw-practice', title: 'Practice: Rewriting', kind: 'practice',
+            intro: [{ type: 'paragraph', text: 'Practice your rewriting skills with this step-by-step problem.' }],
+            problems: [
+              {
+                id: 'basic-rewrite', title: 'Basic Rewrite',
+                description: 'Complete the proof by rewriting with the given hypothesis',
+                code: `example (a b : Nat) (h : a = b) : a + 1 = b + 1 := by
+  -- Fill in the tactic
+  sorry`,
+                steps: [
+                  { prompt: 'What tactic rewrites using the hypothesis h?', options: [{ text: 'rw [h]', correct: true }, { text: 'exact h', correct: false }, { text: 'apply h', correct: false }, { text: 'simp [h]', correct: false }] }
+                ],
+                fullCode: `example (a b : Nat) (h : a = b) : a + 1 = b + 1 := by
+  rw [h]`
+              }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'induction', number: 3, title: 'Mathematical Induction', tacticTags: ['induction'],
+        sections: [
+          {
+            id: 'induction-basics', title: 'Induction Basics', kind: 'explanation',
+            content: [
+              { type: 'paragraph', text: 'Mathematical induction is a proof technique for statements about natural numbers. It has two steps: a base case (prove for 0) and an inductive step (prove that if it holds for n, it holds for n+1).' },
+              { type: 'paragraph', text: 'In Lean, use `induction n with` to perform induction on variable `n`. This will create two subgoals: the base case and the inductive step with an inductive hypothesis available.' }
+            ]
+          },
+          {
+            id: 'induction-practice', title: 'Practice: Induction', kind: 'practice',
+            intro: [{ type: 'paragraph', text: 'Practice proving a simple property by induction.' }],
+            problems: [
+              {
+                id: 'add-zero', title: 'Add Zero',
+                description: 'Prove that n + 0 = n for all natural numbers n',
+                code: `theorem add_zero (n : Nat) : n + 0 = n := by
+  -- Start the induction
+  sorry`,
+                steps: [
+                  { prompt: 'Which tactic starts the induction on n?', options: [{ text: 'induction n', correct: false }, { text: 'induction n with', correct: true }, { text: 'induct n', correct: false }, { text: 'exact n', correct: false }] },
+                  { prompt: 'For the base case (zero), what closes the goal 0 + 0 = 0?', options: [{ text: 'rfl', correct: true }, { text: 'simp', correct: false }, { text: 'done', correct: false }, { text: 'exact 0', correct: false }] },
+                  { prompt: 'For the inductive step, what do we use the inductive hypothesis for?', options: [{ text: 'To prove the base case', correct: false }, { text: 'To prove n + 0 = n from n.succ + 0 = n.succ', correct: true }, { text: 'To introduce a new variable', correct: false }, { text: 'To rewrite using simp', correct: false }] }
+                ],
+                fullCode: `theorem add_zero (n : Nat) : n + 0 = n := by
+  induction n with
+  | zero => rfl
+  | succ n ih => simp [Nat.add_succ]; exact ih`
+              }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'contradiction', number: 4, title: 'Proof by Contradiction', tacticTags: ['by_contra', 'by_cases', 'push_neg'],
+        sections: [
+          {
+            id: 'understanding-contradiction', title: 'Understanding Proof by Contradiction', kind: 'explanation',
+            content: [
+              { type: 'paragraph', text: 'Proof by contradiction is a powerful technique where we assume the negation of what we want to prove, then show that this assumption leads to a logical contradiction (False). If assuming ¬P leads to False, then P must be true.' },
+              { type: 'paragraph', text: 'In Lean 4, the `by_contra` tactic implements proof by contradiction. If your goal is to prove proposition `P`, then `by_contra h` introduces a hypothesis `h : ¬P` (the negation of P) and changes your goal to proving `False`.' },
+              { type: 'paragraph', text: 'This technique is particularly useful when a direct proof seems difficult, but assuming the opposite leads quickly to a contradiction with known facts.' }
+            ]
+          },
+          {
+            id: 'by-contra-basics', title: 'The by_contra Tactic', kind: 'explanation',
+            content: [
+              { type: 'paragraph', text: 'The `by_contra` tactic follows a clear pattern. After calling `by_contra h`, you have `h : ¬P` in your context and need to prove `False`. To succeed, you must derive a contradiction using `h` together with your other hypotheses.' },
+              { type: 'theorem', name: 'Example: Double Negation', code: `example (P : Prop) : ¬¬P → P := by
+  intro h
+  by_contra np
+  -- h : ¬¬P, np : ¬P
+  -- Goal: False
+  exact h np` },
+              { type: 'paragraph', text: 'In this example, we assume `P` is false (introducing `np : ¬P`), then use the double negation `h : ¬¬P` (which is a function `¬P → False`) with `np` to derive `False` directly.' }
+            ]
+          },
+          {
+            id: 'by-cases-tactic', title: 'The by_cases Tactic', kind: 'explanation',
+            content: [
+              { type: 'paragraph', text: 'The `by_cases` tactic is a related tool that splits your proof into two cases. For a proposition `P`, `by_cases h : P` creates two subgoals: one where `P` is true, and another where `¬P` is true.' },
+              { type: 'paragraph', text: 'This exhaustive case split is useful when you need to consider all possibilities. Combined with proof by contradiction in one branch, it can establish your result holds in all cases.' },
+              { type: 'theorem', name: 'Example: Case Analysis', code: `example (P Q : Prop) (h : ¬P → Q) : Q := by
+  by_cases hp : P
+  · -- Case 1: P is true, but we need Q
+    -- This path won't work, so we need another approach
+    sorry
+  · -- Case 2: ¬P is true
+    exact h hp` }
+            ]
+          },
+          {
+            id: 'push-neg-tactic', title: 'The push_neg Tactic', kind: 'explanation',
+            content: [
+              { type: 'paragraph', text: 'When working with negations and complex logical expressions, the `push_neg` tactic is invaluable. It systematically pushes negations inward using logical equivalences, transforming expressions into more manageable forms.' },
+              { type: 'paragraph', text: 'Key transformations performed by `push_neg` include: ¬∀ becomes ∃¬ (not for all = there exists not), ¬∃ becomes ∀¬ (not exists = for all not), ¬(A ∧ B) becomes A → ¬B, and ¬(A ∨ B) becomes ¬A ∧ ¬B.' },
+              { type: 'paragraph', text: 'Using `push_neg at h` applies these transformations to a hypothesis `h` in your context, making it easier to work with in your proof.' }
+            ]
+          },
+          {
+            id: 'contradiction-exercise', title: 'Exercise: Proof by Contradiction', kind: 'exercise',
+            intro: [{ type: 'paragraph', text: 'Test your understanding of proof by contradiction techniques.' }],
+            questions: [
+              { prompt: 'If your goal is `⊢ P`, what does `by_contra h` do?', options: [{ text: 'Adds `h : P` to the context and changes goal to `False`', correct: false }, { text: 'Adds `h : ¬P` to the context and changes goal to `False`', correct: true }, { text: 'Changes the goal to `¬P`', correct: false }, { text: 'Adds `h : P → False` to the context', correct: false }], explanation: 'The `by_contra h` tactic introduces the negation of your goal as a hypothesis (`h : ¬P`) and changes the goal to proving `False`. To complete the proof, you must derive a contradiction from `h`.' },
+              { prompt: 'What does `by_cases h : P` do?', options: [{ text: 'Adds `h : P` to the context', correct: false }, { text: 'Creates two subgoals: one with `h : P`, another with `h : ¬P`', correct: true }, { text: 'Proves P by contradiction', correct: false }, { text: 'Changes goal to `P ∨ ¬P`', correct: false }], explanation: 'The `by_cases h : P` tactic performs case analysis on `P`, creating two separate subgoals: one where `P` holds (adding `h : P`), and another where `P` does not hold (adding `h : ¬P`). You must prove your goal in both cases.' },
+              { prompt: 'What is the purpose of `push_neg`?', options: [{ text: 'To introduce a new hypothesis', correct: false }, { text: 'To push negations inward using logical equivalences', correct: true }, { text: 'To apply a contradiction directly', correct: false }, { text: 'To split a goal into cases', correct: false }], explanation: 'The `push_neg` tactic transforms negated expressions by pushing negations inward, converting complex logical forms into simpler equivalents. For example, it transforms ¬∀ into ∃¬ and ¬∃ into ∀¬.' }
+            ]
+          },
+          {
+            id: 'contradiction-practice', title: 'Practice: Proof by Contradiction', kind: 'practice',
+            intro: [{ type: 'paragraph', text: 'Practice your proof by contradiction skills with this step-by-step problem.' }],
+            problems: [
+              {
+                id: 'basic-contradiction', title: 'Basic Contradiction',
+                description: 'Complete the proof using by_contra',
+                code: `example (P : Prop) (h : ¬¬P) : P := by
+  -- Start the proof by contradiction
+  sorry`,
+                steps: [
+                  { prompt: 'Which tactic starts a proof by contradiction?', options: [{ text: 'by_contra', correct: true }, { text: 'by_cases', correct: false }, { text: 'push_neg', correct: false }, { text: 'exact', correct: false }] },
+                  { prompt: 'After `by_contra np`, what hypothesis do we have?', options: [{ text: 'np : P', correct: false }, { text: 'np : ¬P', correct: true }, { text: 'np : ¬¬P', correct: false }, { text: 'np : False', correct: false }] },
+                  { prompt: 'How do we close the goal using h : ¬¬P and np : ¬P?', options: [{ text: 'exact h np', correct: true }, { text: 'exact np h', correct: false }, { text: 'apply h', correct: false }, { text: 'rfl', correct: false }] }
+                ],
+                fullCode: `example (P : Prop) (h : ¬¬P) : P := by
+  by_contra np
+  exact h np`
+              },
+              {
+                id: 'push-neg-practice', title: 'Push Negation Practice',
+                description: 'Use push_neg to transform a negated universal statement',
+                code: `example (P : Nat → Prop) (h : ¬∀ n, P n) : ∃ n, ¬P n := by
+  -- Transform the negation
+  sorry`,
+                steps: [
+                  { prompt: 'What tactic transforms ¬∀ into ∃¬?', options: [{ text: 'by_contra', correct: false }, { text: 'push_neg', correct: true }, { text: 'by_cases', correct: false }, { text: 'rw', correct: false }] },
+                  { prompt: 'After `push_neg at h`, what does h become?', options: [{ text: 'h : ∃ n, P n', correct: false }, { text: 'h : ∃ n, ¬P n', correct: true }, { text: 'h : ∀ n, ¬P n', correct: false }, { text: 'h : ¬∃ n, P n', correct: false }] },
+                  { prompt: 'What completes the proof after push_neg?', options: [{ text: 'exact h', correct: true }, { text: 'rfl', correct: false }, { text: 'apply h', correct: false }, { text: 'by_contra', correct: false }] }
+                ],
+                fullCode: `example (P : Nat → Prop) (h : ¬∀ n, P n) : ∃ n, ¬P n := by
+  push_neg at h
+  exact h`
+              }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'ai-proofs', number: 5, title: 'Proof with AI', tacticTags: ['AI', 'automation', 'aiprover'],
+        sections: [
+          {
+            id: 'ai-in-lean', title: 'AI and Automated Theorem Proving', kind: 'explanation',
+            content: [
+              { type: 'paragraph', text: 'The intersection of AI and formal theorem proving is one of the most exciting frontiers in mathematics and computer science. Lean 4 has become a leading platform for developing and testing AI-powered theorem provers.' },
+              { type: 'paragraph', text: 'Recent advances in 2025-2026 have demonstrated that AI systems can now assist with formal proofs at unprecedented levels. From auto-completing proof steps to suggesting entire proof strategies, AI is transforming how we approach formal verification.' },
+              { type: 'paragraph', text: 'Major developments include benchmarks like SorryDB for evaluating AI provers, systems like Aristotle and Ax-Prover that use multi-agent approaches, and autonomous provers like AxiomProver that have solved previously unsolved problems.' }
+            ]
+          },
+          {
+            id: 'ai-assisted-proving', title: 'AI-Assisted Proving in Practice', kind: 'explanation',
+            content: [
+              { type: 'paragraph', text: 'AI-assisted proving in Lean 4 takes several forms. The most common is proof step suggestion, where the AI analyzes your current proof state and suggests relevant tactics or lemmas that might advance your proof.' },
+              { type: 'paragraph', text: 'More advanced systems can generate entire proofs automatically. These systems use large language models trained on vast corpora of formal mathematics, combined with verification loops that ensure each suggested step is correct before proceeding.' },
+              { type: 'paragraph', text: 'The integration of AI with Lean 4\'s tactic framework enables a new paradigm: interactive theorem proving where human intuition guides the overall strategy while AI handles routine steps and suggests creative approaches when stuck.' }
+            ]
+          },
+          {
+            id: 'leandojo-platform', title: 'The LeanDojo Platform', kind: 'explanation',
+            content: [
+              { type: 'paragraph', text: 'LeanDojo is a comprehensive platform for AI-assisted theorem proving in Lean 4. It provides tools for training, evaluating, and deploying AI models that can interact with Lean\'s proof environment.' },
+              { type: 'paragraph', text: 'The platform offers datasets of formal proofs, evaluation benchmarks, and interfaces that allow AI models to receive feedback from Lean\'s type checker. This closed-loop system ensures that AI suggestions are always verified before acceptance.' },
+              { type: 'paragraph', text: 'Researchers use LeanDojo to develop and compare different approaches to AI theorem proving, driving rapid advancement in the field. The platform has become the standard for evaluating AI provers on real formal mathematics.' }
+            ]
+          },
+          {
+            id: 'future-directions', title: 'Future Directions', kind: 'explanation',
+            content: [
+              { type: 'paragraph', text: 'The future of AI in theorem proving points toward more sophisticated collaboration between human mathematicians and AI systems. Emerging approaches include multi-agent systems where specialized AI components handle different aspects of proving.' },
+              { type: 'paragraph', text: 'Another frontier is auto-formalization—using AI to translate informal mathematical text into formal Lean code. This could dramatically accelerate the formalization of research-level mathematics.' },
+              { type: 'paragraph', text: 'As these technologies mature, we may see AI systems that can not only prove theorems but also discover new mathematical conjectures and contribute to the advancement of mathematics itself.' }
+            ]
+          },
+          {
+            id: 'ai-quiz', title: 'Check Your Understanding', kind: 'exercise',
+            intro: [{ type: 'paragraph', text: 'Test your understanding of AI-assisted theorem proving.' }],
+            questions: [
+              { prompt: 'What is LeanDojo?', options: [{ text: 'A new proof tactic in Lean 4', correct: false }, { text: 'A platform for AI-assisted theorem proving', correct: true }, { text: 'A theorem about dojo construction', correct: false }, { text: 'A type of proof strategy', correct: false }], explanation: 'LeanDojo is a comprehensive platform for training, evaluating, and deploying AI models that can assist with theorem proving in Lean 4.' },
+              { prompt: 'What is a key advantage of AI-assisted proving?', options: [{ text: 'It replaces the need for human mathematicians', correct: false }, { text: 'It can suggest tactics and complete proof steps automatically', correct: true }, { text: 'It guarantees correctness without verification', correct: false }, { text: 'It works without any formal proof framework', correct: false }], explanation: 'AI-assisted proving can suggest tactics, complete proof steps, and even generate entire proofs, but all suggestions are verified by Lean\'s type checker for correctness.' },
+              { prompt: 'What is auto-formalization?', options: [{ text: 'Automatic theorem proving', correct: false }, { text: 'Converting informal mathematics to formal Lean code', correct: true }, { text: 'Formal proof verification', correct: false }, { text: 'Tactic suggestion', correct: false }], explanation: 'Auto-formalization is the process of using AI to translate informal mathematical text into formal Lean code, potentially accelerating the formalization of research mathematics.' }
+            ]
+          }
+        ]
+      }
+    ]
+
+    const glossaryData = [
+      { term: 'intro', definition: 'Introduces a new hypothesis into the proof state. Use intro h to name the hypothesis h, or intro to let Lean choose a name.', example: `-- Goal: P → Q
+theorem intro_ex (h : P) : Q := by
+  intro hp   -- hp : P is added to context
+  -- Now hp : P and h : P are available
+  sorry` },
+      { term: 'apply', definition: 'Applies a function or theorem to the goal, potentially simplifying it. Used when you know what theorem/lemma to use.', example: `-- h : a = b
+-- Goal: f a = f b
+theorem apply_ex (h : a = b) : f a = f b := by
+  apply congrArg f  -- applies function congruence
+  exact h          -- now goal is a = b which we have` },
+      { term: 'exact', definition: 'Closes a goal by providing an exact proof term -- h is exactly what we need', example: `-- Goal: ∃ n : Nat, n > 0
+theorem ex : ∃ n : Nat, n > 0 := by
+  use 1       -- provide witness
+  -- Goal is now: 1 > 0
+  decide` },
+      { term: 'rw', definition: 'Rewrites the goal (or a hypothesis with rw [...] at h) using an equality. Replaces the left side with the right.', example: `-- h : a = b
+-- Goal: f a = f b
+theorem baz (h : a = b) : f a = f b := by
+  rw [h]      -- rewrites a → b in the goal
+  -- Goal is now: f b = f b
+  rfl` },
+      { term: 'by_contra', definition: 'Begins a proof by contradiction. Assumes the negation of the goal and asks you to derive False.', example: `-- Goal: P
+theorem contra : P := by
+  by_contra h  -- h : ¬P is now in context
+  -- ... derive False from h ...
+  -- exact some_proof_of_false` },
+      { term: 'by_cases', definition: 'Splits a proof into two cases based on a proposition. Creates two subgoals: one with the proposition true, another with its negation true.', example: `-- Goal: Q
+theorem cases_ex (h1 : P → Q) (h2 : ¬P → Q) : Q := by
+  by_cases h : P
+  · exact h1 h    -- case 1: P is true
+  · exact h2 h    -- case 2: ¬P is true` },
+      { term: 'push_neg', definition: 'Pushes a negation inward. Transforms ¬∀ into ∃¬, ¬∃ into ∀¬, ¬(A ∧ B) into A → ¬B, etc.', example: `-- h : ¬(∃ x, P x)
+-- After push_neg:
+-- h : ∀ x, ¬(P x)
+theorem push_ex (h : ¬(∃ x : Nat, P x)) : ∀ x, ¬(P x) := by
+  push_neg at h
+  exact h` },
+      { term: 'rfl', definition: 'Closes a goal of the form a = a. Works when both sides are definitionally equal (compute to the same term).', example: `-- Goal: 0 + 0 = 0
+theorem rfl_ex : 0 + 0 = 0 := by
+  rfl   -- 0 + 0 computes to 0` },
+      { term: 'ring', definition: 'Solves equalities in commutative rings by normalizing both sides. Works for polynomial arithmetic over Nat, Int, etc.', example: `-- Goal: (a + b) * (a + b) = a*a + 2*a*b + b*b
+theorem ring_ex (a b : Nat) :
+    (a + b) * (a + b) = a*a + 2*a*b + b*b := by
+  ring    -- normalizes both sides and checks equality` },
+      { term: 'omega', definition: 'Solves linear arithmetic goals over Nat and Int. Handles inequalities, modular arithmetic, and bounded quantifiers.', example: `-- Goal: a < b → a + 1 ≤ b
+theorem omega_ex (a b : Nat) (h : a < b) : a + 1 ≤ b := by
+  omega   -- handles the linear arithmetic automatically` },
+      { term: 'induction', definition: 'Performs structural induction on a variable. Creates a base case and an inductive step with the inductive hypothesis.', example: `-- Prove n + 0 = n by induction on n
+theorem add_zero (n : Nat) : n + 0 = n := by
+  induction n with
+  | zero => rfl           -- base: 0 + 0 = 0
+  | succ n ih =>
+    simp [Nat.add_succ]   -- inductive step
+    exact ih               -- uses ih : n + 0 = n` },
+      { term: 'have', definition: 'Introduces an intermediate lemma or fact into the proof. Useful for breaking complex proofs into smaller steps.', example: `-- Goal: c
+theorem have_ex (ha : a) (hab : a → b) (hbc : b → c) : c := by
+  have hb : b := hab ha   -- introduce intermediate fact
+  exact hbc hb             -- use it to close the goal` },
+      { term: 'calc', definition: 'Performs a calculational proof — a chain of equalities or inequalities with a justification for each step.', example: `-- Goal: a + b + c = c + b + a
+theorem calc_ex (a b c : Nat) :
+    a + b + c = c + b + a := by
+  calc a + b + c = c + (a + b) := by ring
+    _ = c + (b + a)         := by rw [Nat.add_comm a b]
+    _ = c + b + a           := by ring` },
+      { term: 'simp', definition: 'Simplifies the goal using a database of equational lemmas. Can be given specific lemmas to use with simp [lemma1, lemma2].', example: `-- Goal: list.reverse (list.reverse xs) = xs
+theorem simp_ex (xs : List Nat) :
+    xs.reverse.reverse = xs := by
+  simp    -- applies known lemmas about List.reverse automatically` },
+      { term: 'use', definition: 'Provides a witness for an existential goal (∃). After use, you must still prove the witness satisfies the property.', example: `-- Goal: ∃ n : Nat, n > 0
+theorem ex : ∃ n : Nat, n > 0 := by
+  use 1       -- provide witness
+  -- Goal is now: 1 > 0
+  decide` }
+    ]
+
+    // ===== SIMPLE HASH ROUTER =====
+    const RouterContext = createContext()
+
+    function SimpleRouter({ children }) {
+      const parseHash = () => {
+        const h = window.location.hash.replace(/^#/, '')
+        const parts = h.split('#')
+        return { path: (parts[0] || '').replace(/^\//, '') || 'introduction', section: parts[1] || null }
+      }
+      const [route, setRoute] = useState(parseHash)
+
+      useEffect(() => {
+        // Set initial hash if empty
+        if (!window.location.hash || window.location.hash === '#') {
+          window.location.hash = '#/introduction'
+        }
+        const onHashChange = () => setRoute(parseHash())
+        window.addEventListener('hashchange', onHashChange)
+        return () => window.removeEventListener('hashchange', onHashChange)
+      }, [])
+
+      const navigate = useCallback((to) => { window.location.hash = '#' + to }, [])
+
+      return <RouterContext.Provider value={{ path: route.path, section: route.section, navigate }}>{children}</RouterContext.Provider>
+    }
+
+    function useRouter() { return useContext(RouterContext) }
+    function useLocation() {
+      const { path, section } = useRouter()
+      return { pathname: path, hash: section ? '#' + section : '' }
+    }
+
+    function NavLink({ to, children, className }) {
+      const { path } = useRouter()
+      const isActive = path === to.replace(/^\//, '')
+      const cls = typeof className === 'function' ? className({ isActive }) : className
+      return <a href={'#/' + to.replace(/^\//, '')} className={cls || (isActive ? 'active' : '')}>{children}</a>
+    }
+
+    // ===== QUIZ CONTEXT =====
+    const QuizContext = createContext()
+
+    function QuizProvider({ children }) {
+      const [answers, setAnswers] = useState([])
+
+      const addAnswer = (answer) => {
+        const newAnswer = { ...answer, timestamp: new Date().toISOString() }
+        setAnswers(prev => {
+          const idx = prev.findIndex(a => a.sectionId === answer.sectionId && a.questionIndex === answer.questionIndex)
+          if (idx !== -1) {
+            const copy = [...prev]; copy[idx] = newAnswer; return copy
+          }
+          return [...prev, newAnswer]
+        })
+      }
+
+      const clearAnswers = () => setAnswers([])
+
+      const exportAnswers = () => {
+        if (answers.length === 0) return 'No quiz answers recorded yet.'
+        let out = '=== LeanProof Tutorial - Quiz Answers ===\nGenerated: ' + new Date().toISOString() + '\nTotal Questions Answered: ' + answers.length + '\n\n'
+        const grouped = answers.reduce((acc, a) => {
+          const k = a.chapterId + ' - ' + a.chapterTitle
+          ;(acc[k] = acc[k] || []).push(a)
+          return acc
+        }, {})
+        for (const [ch, chAnswers] of Object.entries(grouped)) {
+          out += '\n' + '='.repeat(60) + '\n' + ch + '\n' + '='.repeat(60) + '\n'
+          const sg = chAnswers.reduce((acc, a) => {
+            ;(acc[a.sectionTitle] = acc[a.sectionTitle] || []).push(a)
+            return acc
+          }, {})
+          for (const [st, sa] of Object.entries(sg)) {
+            out += '\n--- Section: ' + st + ' ---\n\n'
+            for (const a of sa) {
+              out += 'Q' + (a.questionIndex + 1) + ': ' + a.prompt + '\nAnswer: ' + a.selectedAnswer + '\nResult: ' + (a.isCorrect ? '\u2713 CORRECT' : '\u2717 INCORRECT') + '\nTime: ' + a.timestamp + '\n\n'
+            }
+          }
+        }
+        out += '\n' + '='.repeat(60) + '\nEND OF REPORT\n'
+        return out
+      }
+
+      return <QuizContext.Provider value={{ answers, addAnswer, clearAnswers, exportAnswers }}>{children}</QuizContext.Provider>
+    }
+
+    function useQuiz() {
+      const ctx = useContext(QuizContext)
+      if (!ctx) throw new Error('useQuiz must be used within QuizProvider')
+      return ctx
+    }
+
+    // ===== CODEBLOCK COMPONENT =====
+    function CodeBlock({ code, title }) {
+      const [copied, setCopied] = useState(false)
+      const handleCopy = () => {
+        navigator.clipboard.writeText(code).then(() => {
+          setCopied(true)
+          setTimeout(() => setCopied(false), 2000)
+        })
+      }
+      return (
+        <div className="code-block">
+          {title && (
+            <div className="code-block-header">
+              <span className="code-block-lang">Lean 4</span>
+              <span className="code-block-title">{title}</span>
+              <button className="code-copy-btn" onClick={handleCopy} aria-label="Copy code">
+                <Icon name={copied ? 'check' : 'copy'} size={14} />
+                {copied ? 'Copied' : 'Copy'}
+              </button>
+            </div>
+          )}
+          <pre className="code-pre"><code>{code}</code></pre>
+        </div>
+      )
+    }
+
+    // ===== CONTENTBLOCK COMPONENT =====
+    function ContentBlock({ block }) {
+      if (block.type === 'paragraph') return <p className="content-paragraph">{block.text}</p>
+      if (block.type === 'theorem') return (
+        <div className="content-theorem">
+          <div className="theorem-label">{block.name}</div>
+          <CodeBlock code={block.code} />
+        </div>
+      )
+      return null
+    }
+
+    // ===== EXERCISEBLOCK COMPONENT =====
+    function ExerciseBlock({ section }) {
+      const [selected, setSelected] = useState({})
+      const [revealed, setRevealed] = useState({})
+      const { addAnswer } = useQuiz()
+      const { path } = useRouter()
+      const chapter = chaptersData.find(ch => ch.id === path)
+
+      useEffect(() => {
+        if (chapter) {
+          Object.keys(revealed).forEach(qIdxStr => {
+            const qIdx = parseInt(qIdxStr)
+            if (revealed[qIdx] && selected[qIdx] !== undefined) {
+              const q = section.questions[qIdx]
+              const opt = q.options[selected[qIdx]]
+              addAnswer({
+                chapterId: chapter.id, chapterTitle: chapter.title,
+                sectionId: section.id, sectionTitle: section.title,
+                questionIndex: qIdx, prompt: q.prompt,
+                selectedAnswer: opt.text, isCorrect: opt.correct
+              })
+            }
+          })
+        }
+      }, [revealed])
+
+      const handleSelect = (qIdx, oIdx) => { if (!revealed[qIdx]) setSelected(prev => ({ ...prev, [qIdx]: oIdx })) }
+      const handleReveal = (qIdx) => setRevealed(prev => ({ ...prev, [qIdx]: true }))
+
+      return (
+        <div className="exercise-block">
+          {section.questions.map((q, qIdx) => (
+            <div key={qIdx} className="exercise-question">
+              <p className="question-prompt"><span className="question-num">Q{qIdx + 1}</span>{q.prompt}</p>
+              <div className="question-options">
+                {q.options.map((opt, oIdx) => {
+                  const isSelected = selected[qIdx] === oIdx
+                  const isRevealedNow = revealed[qIdx]
+                  let cls = 'question-opt'
+                  if (isSelected && !isRevealedNow) cls += ' selected'
+                  if (isRevealedNow && opt.correct) cls += ' correct'
+                  if (isRevealedNow && isSelected && !opt.correct) cls += ' wrong'
+                  return (
+                    <button key={oIdx} className={cls} onClick={() => handleSelect(qIdx, oIdx)} disabled={isRevealedNow}>
+                      <span className="opt-letter">{String.fromCharCode(65 + oIdx)}</span>
+                      <span className="opt-text">{opt.text}</span>
+                      {isRevealedNow && opt.correct && <Icon name="check-circle" size={16} className="opt-icon icon-ok" />}
+                      {isRevealedNow && isSelected && !opt.correct && <Icon name="x-circle" size={16} className="opt-icon icon-no" />}
+                    </button>
+                  )
+                })}
+              </div>
+              {!revealed[qIdx] && selected[qIdx] !== undefined && (
+                <button className="reveal-btn" onClick={() => handleReveal(qIdx)}>
+                  <Icon name="chevron-down" size={14} /> Check Answer
+                </button>
+              )}
+              {revealed[qIdx] && (
+                <div className={'explanation ' + (selected[qIdx] !== undefined && q.options[selected[qIdx]].correct ? 'ok' : 'no')}>
+                  {q.explanation}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )
+    }
+
+    // ===== PRACTICEPROBLEM COMPONENT =====
+    function PracticeProblem({ problem }) {
+      const [currentStep, setCurrentStep] = useState(0)
+      const [selected, setSelected] = useState({})
+      const [revealed, setRevealed] = useState({})
+      const [showSolution, setShowSolution] = useState(false)
+      const totalSteps = problem.steps.length
+      const allRevealed = Object.keys(revealed).length === totalSteps
+
+      const handleSelect = (sIdx, oIdx) => { if (!revealed[sIdx]) setSelected(prev => ({ ...prev, [sIdx]: oIdx })) }
+      const handleCheck = (sIdx) => {
+        setRevealed(prev => ({ ...prev, [sIdx]: true }))
+        if (sIdx < totalSteps - 1) setCurrentStep(sIdx + 1)
+      }
+      const handleReset = () => { setCurrentStep(0); setSelected({}); setRevealed({}); setShowSolution(false) }
+
+      return (
+        <div className="practice-problem">
+          <p className="practice-desc">{problem.description}</p>
+          <div className="practice-start-code"><CodeBlock code={problem.code} /></div>
+          {problem.steps.map((step, sIdx) => {
+            const isRevealedNow = revealed[sIdx]
+            const choice = selected[sIdx]
+            const isCorrect = isRevealedNow && step.options[choice]?.correct
+            const isVisible = sIdx <= currentStep || allRevealed
+            return (
+              <div key={sIdx} className={'practice-step ' + (isVisible ? 'visible' : 'locked')}>
+                <div className="practice-step-header">
+                  <span className="step-badge">Line {sIdx + 1}</span>
+                  <span className="step-prompt">{step.prompt}</span>
+                </div>
+                {isVisible && (
+                  <div className="step-options">
+                    {step.options.map((opt, oIdx) => {
+                      let cls = 'step-opt'
+                      if (choice === oIdx && !isRevealedNow) cls += ' selected'
+                      if (isRevealedNow && opt.correct) cls += ' correct'
+                      if (isRevealedNow && choice === oIdx && !opt.correct) cls += ' wrong'
+                      return (
+                        <button key={oIdx} className={cls} onClick={() => handleSelect(sIdx, oIdx)} disabled={isRevealedNow}>
+                          <span className="step-letter">{String.fromCharCode(65 + oIdx)}</span>
+                          <code className="step-code">{opt.text}</code>
+                          {isRevealedNow && opt.correct && <Icon name="check-circle" size={14} className="opt-icon icon-ok" />}
+                          {isRevealedNow && choice === oIdx && !opt.correct && <Icon name="x-circle" size={14} className="opt-icon icon-no" />}
+                        </button>
+                      )
+                    })}
+                    {!isRevealedNow && choice !== undefined && (
+                      <button className="step-check-btn" onClick={() => handleCheck(sIdx)}>
+                        Check & Continue <Icon name="chevron-down" size={14} />
+                      </button>
+                    )}
+                    {isRevealedNow && (
+                      <div className={'step-feedback ' + (isCorrect ? 'ok' : 'no')}>{step.options[choice].text}</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+          {allRevealed && (
+            <div className="practice-complete">
+              <button className="btn btn-ghost" onClick={() => setShowSolution(!showSolution)}>
+                <Icon name="chevron-down" size={14} /> {showSolution ? 'Hide' : 'Show'} Full Solution
+              </button>
+              {showSolution && <div className="practice-solution"><CodeBlock code={problem.fullCode} /></div>}
+              <button className="btn btn-ghost" onClick={handleReset}>
+                <Icon name="rotate" size={14} /> Try Again
+              </button>
+            </div>
+          )}
+        </div>
+      )
+    }
+
+    // ===== PRACTICEBLOCK COMPONENT =====
+    function PracticeBlock({ section }) {
+      const [activeTab, setActiveTab] = useState(0)
+      const problems = section.problems
+      return (
+        <div className="practice-block">
+          <div className="practice-tabs">
+            {problems.map((p, i) => (
+              <button key={p.id} className={'practice-tab ' + (i === activeTab ? 'active' : '')} onClick={() => setActiveTab(i)}>{p.title}</button>
+            ))}
+          </div>
+          {problems.map((p, i) => i === activeTab ? <PracticeProblem key={p.id} problem={p} /> : null)}
+        </div>
+      )
+    }
+
+    // ===== GLOSSARYPANEL COMPONENT =====
+    function GlossaryPanel() {
+      const [search, setSearch] = useState('')
+      const [expanded, setExpanded] = useState({})
+      const filtered = glossaryData.filter(e => e.term.toLowerCase().includes(search.toLowerCase()) || e.definition.toLowerCase().includes(search.toLowerCase()))
+      const toggle = (term) => setExpanded(prev => ({ ...prev, [term]: !prev[term] }))
+      return (
+        <div className="glossary-panel">
+          <div className="glossary-search">
+            <Icon name="search" size={14} />
+            <input type="text" placeholder="Search tactics..." value={search} onChange={e => setSearch(e.target.value)} />
+          </div>
+          <div className="glossary-list">
+            {filtered.map(entry => (
+              <div key={entry.term} className="glossary-entry">
+                <button className="glossary-term" onClick={() => toggle(entry.term)}>
+                  {expanded[entry.term] ? <Icon name="chevron-up" size={14} /> : <Icon name="chevron-down" size={14} />}
+                  <code>{entry.term}</code>
+                </button>
+                {expanded[entry.term] && (
+                  <div className="glossary-body">
+                    <p className="glossary-def">{entry.definition}</p>
+                    {entry.example && (
+                      <div className="glossary-example">
+                        <div className="glossary-example-label">Example</div>
+                        <pre className="glossary-pre"><code>{entry.example}</code></pre>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    }
+
+    // ===== GLOSSARYPAGE COMPONENT =====
+    function GlossaryPage() {
+      return (
+        <div className="chapter-page">
+          <div className="chapter-header">
+            <div className="chapter-number">Reference</div>
+            <h1>Tactic Glossary</h1>
+          </div>
+          <div className="chapter-content"><GlossaryPanel /></div>
+        </div>
+      )
+    }
+
+    // ===== EXPORTANSWERS COMPONENT =====
+    function ExportAnswers() {
+      const { answers, exportAnswers } = useQuiz()
+      const handleExport = () => {
+        const blob = new Blob([exportAnswers()], { type: 'text/plain' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = 'leanproof-answers-' + new Date().toISOString().split('T')[0] + '.txt'
+        document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url)
+      }
+      return (
+        <div className="export-section">
+          <div className="export-card">
+            <h3>Export Your Quiz Answers</h3>
+            <p className="export-description">You have answered <strong>{answers.length}</strong> question{answers.length !== 1 ? 's' : ''} across all chapters. Export your answers to submit for review.</p>
+            <button className="btn btn-primary export-btn" onClick={handleExport} disabled={answers.length === 0}>
+              <Icon name="download" size={16} /> Export Answers
+            </button>
+            {answers.length === 0 && <p className="export-hint">Complete some quiz questions to enable export</p>}
+          </div>
+        </div>
+      )
+    }
+
+    // ===== CHAPTERPAGE COMPONENT =====
+    function ChapterPage() {
+      const { path } = useRouter()
+      const chapter = chaptersData.find(ch => ch.id === path)
+
+      if (!chapter) {
+        return (
+          <div className="chapter-page">
+            <p>Chapter not found. <a href="#/introduction">Go to Introduction</a></p>
+          </div>
+        )
+      }
+
+      return (
+        <div className="chapter-page">
+          <div className="chapter-header">
+            <div className="chapter-number">Chapter {chapter.number}</div>
+            <h1>{chapter.title}</h1>
+            <div className="chapter-tags">
+              {chapter.tacticTags.map(tag => <code key={tag} className="chapter-tag">{tag}</code>)}
+            </div>
+          </div>
+          <div className="chapter-content">
+            {chapter.sections.map(section => (
+              <section key={section.id} id={section.id} className="section">
+                <h2>{section.title}</h2>
+                {section.kind === 'explanation' && section.content?.map((block, i) => <ContentBlock key={i} block={block} />)}
+                {section.kind === 'exercise' && (
+                  <>
+                    {section.intro?.map((block, i) => <ContentBlock key={i} block={block} />)}
+                    <ExerciseBlock section={section} />
+                  </>
+                )}
+                {section.kind === 'practice' && (
+                  <>
+                    {section.intro?.map((block, i) => <ContentBlock key={i} block={block} />)}
+                    <PracticeBlock section={section} />
+                  </>
+                )}
+                <div className="section-divider" />
+              </section>
+            ))}
+            <ExportAnswers />
+          </div>
+        </div>
+      )
+    }
+
+    // ===== APPLAYOUT COMPONENT =====
+    function AppLayout() {
+      const [sidebarOpen, setSidebarOpen] = useState(false)
+      const { path, section: hashSection, navigate } = useRouter()
+
+      useEffect(() => {
+        if (hashSection) {
+          setTimeout(() => {
+            document.getElementById(hashSection)?.scrollIntoView({ behavior: 'smooth' })
+          }, 100)
+        }
+      }, [path, hashSection])
+
+      // Close sidebar on route change
+      useEffect(() => { setSidebarOpen(false) }, [path])
+
+      return (
+        <div className="app-layout">
+          <header className="app-header">
+            <div className="header-inner">
+              <div className="header-left">
+                <button className="menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="Toggle navigation">
+                  {sidebarOpen ? <Icon name="x" size={20} /> : <Icon name="menu" size={20} />}
+                </button>
+                <a href="#/introduction" className="logo">LeanProof</a>
+              </div>
+              <nav className="header-chapters">
+                {chaptersData.map(ch => (
+                  <NavLink key={ch.id} to={ch.id}>{ch.number}. {ch.title}</NavLink>
+                ))}
+                <NavLink to="glossary">
+                  <Icon name="book" size={14} /> Glossary
+                </NavLink>
+              </nav>
+            </div>
+          </header>
+
+          {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
+
+          <aside className={'sidebar' + (sidebarOpen ? ' open' : '')}>
+            <div className="sidebar-inner">
+              {chaptersData.map(chapter => (
+                <div key={chapter.id} className="sidebar-chapter">
+                  <div className="sidebar-chapter-title">{chapter.number}. {chapter.title}</div>
+                  {chapter.sections.map(sec => (
+                    <a
+                      key={sec.id}
+                      href={'#/' + chapter.id + '#' + sec.id}
+                      className={'sidebar-section' + (path === chapter.id && hashSection === sec.id ? ' current' : '')}
+                    >
+                      {sec.kind === 'exercise' && <span className="sidebar-q-dot" />}
+                      {sec.title}
+                    </a>
+                  ))}
+                </div>
+              ))}
+              <div className="sidebar-chapter">
+                <a href="#/glossary" className="sidebar-chapter-title">Tactic Glossary</a>
+              </div>
+            </div>
+          </aside>
+
+          <main className="app-main">
+            {path === 'glossary' ? <GlossaryPage /> : <ChapterPage />}
+          </main>
+        </div>
+      )
+    }
+
+    // ===== APP =====
+    function App() {
+      return (
+        <QuizProvider>
+          <SimpleRouter>
+            <AppLayout />
+          </SimpleRouter>
+        </QuizProvider>
+      )
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />)
+  </script>
+</body>
+</html>

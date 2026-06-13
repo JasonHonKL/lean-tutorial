@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom'
 import { chaptersData } from '../data/chapters'
-import { ContentBlock } from './ContentBlock'
+import { MarkdownContent } from './MarkdownContent'
 import { ExerciseBlock } from './ExerciseBlock'
 import { PracticeBlock } from './PracticeBlock'
 import { ExportAnswers } from './ExportAnswers'
@@ -36,24 +36,20 @@ export function ChapterPage() {
           <section key={section.id} id={section.id} className="section">
             <h2>{section.title}</h2>
 
-            {section.kind === 'explanation' && section.content?.map((block, index) => (
-              <ContentBlock key={index} block={block} />
-            ))}
+            {section.kind === 'explanation' && section.markdown && (
+              <MarkdownContent markdown={section.markdown} />
+            )}
 
             {section.kind === 'exercise' && (
               <>
-                {section.intro?.map((block, index) => (
-                  <ContentBlock key={index} block={block} />
-                ))}
+                {section.intro && <MarkdownContent markdown={section.intro} />}
                 <ExerciseBlock section={section} />
               </>
             )}
 
             {section.kind === 'practice' && (
               <>
-                {section.intro?.map((block, index) => (
-                  <ContentBlock key={index} block={block} />
-                ))}
+                {section.intro && <MarkdownContent markdown={section.intro} />}
                 <PracticeBlock section={section} />
               </>
             )}
